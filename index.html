@@ -58,7 +58,6 @@
   .cdown-bar { height:6px; background:#eee; border-radius:99px; overflow:hidden; }
   .cdown-fill { height:100%; background:linear-gradient(90deg,#4caf50,#ffeb3b,#f44336); border-radius:99px; width:100%; }
 
-  /* 黒画面オーバーレイ */
   #blackout {
     position: fixed; inset: 0; z-index: 9000;
     background: #000; opacity: 0; pointer-events: none;
@@ -278,7 +277,7 @@ function renderQuestion() {
       fill.style.transition = `width ${SCARE_DELAY_SEC}s linear`;
       fill.style.width = '0%';
     }, 80);
-    scareTimer = setTimeout(triggerScare, SCARE_DELAY_SEC * 1000);
+    scareTimer = setTimeout(() => {document.getElementById('blackout').classList.add('fade-in');setTimeout(triggerScare, 1500);}, SCARE_DELAY_SEC * 1000);
   }
 }
 
