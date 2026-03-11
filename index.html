@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧠 本当のIQテスト</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    background: #e8f4fd; color: #1a1a2e;
+    min-height: 100vh; overflow-x: hidden;
+  }
+  header {
+    background: linear-gradient(135deg, #1565c0, #1976d2, #2196f3);
+    color: white; text-align: center; padding: 20px;
+    box-shadow: 0 4px 20px rgba(21,101,192,0.4);
+  }
+  header h1 { font-family: 'Noto Sans JP', sans-serif; font-size: clamp(1.4rem,4vw,2.2rem); font-weight: 900; letter-spacing: 2px; }
+  header p  { font-size: 0.9rem; opacity: 0.85; margin-top: 6px; }
+
+  .progress-wrap { max-width: 700px; margin: 24px auto 0; padding: 0 20px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 0.85rem; color: #555; margin-bottom: 8px; }
+  .progress-bar { height: 10px; background: #dde; border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg,#2196f3,#00bcd4); border-radius: 99px; transition: width 0.6s ease; width: 0%; }
+
+  .quiz-container { max-width: 700px; margin: 28px auto 40px; padding: 0 20px; }
+
+  .card {
+    background: white; border-radius: 20px; padding: 36px 32px;
+    box-shadow: 0 8px 32px rgba(33,150,243,0.12), 0 2px 8px rgba(0,0,0,0.06);
+    animation: fadeUp 0.5s ease; position: relative; overflow: hidden;
+  }
+  .card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,#2196f3,#00bcd4,#4caf50); }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .badge { display:inline-block; background:#fff9c4; color:#f57f17; font-size:0.75rem; font-weight:700; padding:4px 12px; border-radius:99px; border:1.5px solid #ffe082; margin-bottom:20px; }
+  .question-num { font-size:0.8rem; font-weight:700; color:#2196f3; text-transform:uppercase; letter-spacing:2px; margin-bottom:14px; }
+  .question-text { font-family:'Noto Sans JP',sans-serif; font-size:clamp(1.1rem,3vw,1.35rem); font-weight:700; line-height:1.7; margin-bottom:28px; white-space:pre-line; }
+
+  .choices { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .choice-btn {
+    background:#f5f9ff; border:2.5px solid #dde8f8; border-radius:14px;
+    padding:16px 14px; font-family:'M PLUS Rounded 1c',sans-serif;
+    font-size:1rem; font-weight:700; color:#1a1a2e; cursor:pointer;
+    transition:all 0.2s; display:flex; align-items:center; gap:10px; text-align:left;
+  }
+  .choice-btn:hover:not(:disabled) { background:#e3f2fd; border-color:#2196f3; transform:translateY(-2px); box-shadow:0 6px 18px rgba(33,150,243,0.15); }
+  .choice-btn.correct { background:#e8f5e9; border-color:#4caf50; color:#2e7d32; }
+  .choice-btn.wrong   { background:#ffebee; border-color:#ef5350; color:#c62828; }
+  .choice-btn:disabled { cursor:default; transform:none !important; }
+  .choice-label { width:28px; height:28px; min-width:28px; background:#2196f3; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:900; }
+  .choice-btn.correct .choice-label { background:#4caf50; }
+  .choice-btn.wrong   .choice-label { background:#ef5350; }
+
+  /* countdown bar */
+  .cdown-wrap { margin-top:24px; display:none; }
+  .cdown-bar { height:6px; background:#eee; border-radius:99px; overflow:hidden; }
+  .cdown-fill { height:100%; background:linear-gradient(90deg,#4caf50,#ffeb3b,#f44336); border-radius:99px; width:100%; }
+
+  /* ===== SCARE OVERLAY ===== */
+  #scare {
+    display:none; position:fixed; inset:0; z-index:9999;
+    background:#000; overflow:hidden;
+  }
+  #scare.active { display:block; }
+
+  /* Image slideshow */
+  .scare-img {
+    position:absolute; inset:0;
+    width:100%; height:100%; object-fit:cover;
+    opacity:0;
+    animation: imgShake 0.08s infinite;
+  }
+  .scare-img.visible { opacity:1; }
+
+  @keyframes imgShake {
+    0%  { transform:translate(-7px,-5px) rotate(-2deg)  scale(1.04); }
+    20% { transform:translate(8px,4px)   rotate(1.5deg) scale(0.96); }
+    40% { transform:translate(-6px,7px)  rotate(-1deg)  scale(1.06); }
+    60% { transform:translate(6px,-5px)  rotate(2.5deg) scale(0.95); }
+    80% { transform:translate(-5px,6px)  rotate(-2deg)  scale(1.02); }
+    100%{ transform:translate(4px,-7px)  rotate(1deg)   scale(1.04); }
+  }
+
+  /* Red tint overlay */
+  .scare-tint {
+    position:absolute; inset:0; z-index:1; pointer-events:none;
+    animation:tintPulse 0.14s steps(1) infinite;
+  }
+  @keyframes tintPulse {
+    0%,55%  { background:rgba(0,0,0,0); }
+    56%,100%{ background:rgba(180,0,0,0.25); }
+  }
+
+  /* Scare text */
+  .scare-text {
+    position:absolute; bottom:8%; left:0; right:0; text-align:center; z-index:2;
+    font-family:'Noto Sans JP',sans-serif;
+    font-size:clamp(2rem,7vw,5rem); font-weight:900; color:#ff1111;
+    text-shadow:0 0 20px #ff0000, 0 0 60px #ff4400, 0 0 100px #ff0000;
+    letter-spacing:6px;
+    animation:textFlicker 0.2s steps(1) infinite;
+  }
+  @keyframes textFlicker {
+    0%,45%  { opacity:1;   transform:scale(1); }
+    46%,49% { opacity:0; }
+    50%,90% { opacity:0.9; transform:scale(1.02); }
+    91%,100%{ opacity:0; }
+  }
+
+  /* Fallback: CSS emoji */
+  .scare-fallback {
+    position:absolute; inset:0; display:none;
+    align-items:center; justify-content:center;
+    background:#000; animation:tintPulse 0.14s steps(1) infinite;
+  }
+  .scare-fallback.show { display:flex; }
+  .horror-face { font-size:min(55vw,55vh); line-height:1; animation:imgShake 0.08s infinite; filter:drop-shadow(0 0 50px #ff0000) drop-shadow(0 0 100px #ff0000); user-select:none; }
+
+  /* White flash */
+  #flash { position:fixed; inset:0; z-index:9998; background:white; opacity:0; pointer-events:none; }
+  #flash.pop { animation:whiteFlash 0.35s ease-out forwards; }
+  @keyframes whiteFlash { 0%{opacity:1} 100%{opacity:0} }
+
+  #reset-btn {
+    position:fixed; top:16px; right:16px; z-index:99999;
+    background:rgba(255,255,255,0.15); border:2px solid rgba(255,255,255,0.4);
+    color:white; font-size:1rem; padding:10px 22px; border-radius:99px;
+    cursor:pointer; font-family:'M PLUS Rounded 1c',sans-serif; font-weight:700;
+    display:none; backdrop-filter:blur(6px); transition:background 0.2s;
+  }
+  #reset-btn:hover { background:rgba(255,255,255,0.3); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>IQテスト</h1>
+  <p>科学的根拠に基づいた知能指数測定テスト（全5問）</p>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span id="prog-label">問題 1 / 5</span>
+    <span id="score-label">スコア: 0点</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+</div>
+
+<div class="quiz-container">
+  <div id="quiz-screen">
+    <div class="card" id="quiz-card">
+      <div class="badge">認定IQテスト</div>
+      <div class="question-num" id="q-num">問題 1</div>
+      <div class="question-text" id="q-text"></div>
+      <div class="choices" id="choices"></div>
+      <div class="cdown-wrap" id="cdown-wrap">
+        <div class="cdown-bar"><div class="cdown-fill" id="cdown-fill"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="flash"></div>
+
+<div id="scare">
+  <div id="scare-imgs"></div>   <!-- images injected here -->
+  <div class="scare-tint"></div>
+  <div class="scare-fallback" id="scare-fallback">
+    <div class="horror-face">WWW</div>
+  </div>
+  <div class="scare-text">WWW</div>
+</div>
+
+<button id="reset-btn" onclick="resetAll()">✕ 閉じる</button>
+<audio id="scare-audio" src="sound.mp3" preload="auto"></audio>
+
+<script>
+const HORROR_IMAGES = [
+  'img/1.jpg',
+];
+
+const IMG_SWITCH_MS = 100;
+
+const SCARE_ON_QUESTION = 3;
+
+const SCARE_DELAY_SEC = 4;
+
+
+const questions = [
+  {
+    q: "次のうち、日本で一番高い山はどれ？",
+    choices: ["富士山","北岳","奥穂高岳","槍ヶ岳"],
+    ans: 0
+  },
+  {
+    q: "1 × 0 = ？",
+    choices: ["0","1","10","−1"],
+    ans: 0
+  },
+  {
+    q: "水の化学式は次のうちどれ？",
+    choices: ["CO₂","H₂O₂","H₂O","O₂"],
+    ans: 2
+  },
+  {
+    q: "次の中で哺乳類ではない動物は？",
+    choices: ["イルカ","コウモリ","サメ","クジラ"],
+    ans: 2
+  },
+  {
+    q: "最後の問題です！\nこの画面をじっと見つめながら\n答えを選んでください...",
+    choices: ["楽しみ！","ドキドキ","早く！","準備OK"],
+    ans: 0
+  }
+];
+
+let current = 0;
+let score = 0;
+let answered = false;
+let scareTimer = null;
+let imgInterval = null;
+let imgCursor = 0;
+let validImgs = [];
+const labels = ['A','B','C','D'];
+
+function preloadImages() {
+  const container = document.getElementById('scare-imgs');
+  container.innerHTML = '';
+  validImgs = [];
+
+  HORROR_IMAGES.forEach(src => {
+    const img = document.createElement('img');
+    img.className = 'scare-img';
+    img.src = src;
+    img.alt = '';
+    img.draggable = false;
+    container.appendChild(img);
+
+    img.onload = () => {
+      if (!validImgs.includes(img)) validImgs.push(img);
+    };
+  });
+}
+preloadImages();
+
+function renderQuestion() {
+  const q = questions[current];
+  answered = false;
+  clearTimeout(scareTimer);
+
+  const idx1 = current + 1;
+  document.getElementById('q-num').textContent  = `問題 ${idx1}`;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('prog-label').textContent = `問題 ${idx1} / ${questions.length}`;
+  document.getElementById('prog-fill').style.width = `${(current / questions.length) * 100}%`;
+  document.getElementById('cdown-wrap').style.display = 'none';
+
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = '';
+  q.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="choice-label">${labels[i]}</span>${c}`;
+    btn.onclick = () => handleAnswer(i, btn);
+    choicesEl.appendChild(btn);
+  });
+
+  const card = document.getElementById('quiz-card');
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = 'fadeUp 0.4s ease';
+
+  if (idx1 === SCARE_ON_QUESTION) {
+    const wrap = document.getElementById('cdown-wrap');
+    const fill = document.getElementById('cdown-fill');
+    wrap.style.display = 'block';
+    fill.style.transition = 'none';
+    fill.style.width = '100%';
+    setTimeout(() => {
+      fill.style.transition = `width ${SCARE_DELAY_SEC}s linear`;
+      fill.style.width = '0%';
+    }, 80);
+
+    scareTimer = setTimeout(triggerScare, SCARE_DELAY_SEC * 1000);
+  }
+}
+
+function handleAnswer(idx, btn) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+
+  if (idx === q.ans) {
+    btn.classList.add('correct');
+    score += 20;
+    document.getElementById('score-label').textContent = `スコア: ${score}点`;
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.choice-btn')[q.ans].classList.add('correct');
+  }
+
+  if (current + 1 === SCARE_ON_QUESTION) {
+    clearTimeout(scareTimer);
+    setTimeout(triggerScare, 400);
+    return;
+  }
+
+  setTimeout(() => {
+    current++;
+    renderQuestion();
+  }, 1100);
+}
+
+function triggerScare() {
+  clearTimeout(scareTimer);
+
+  const flash = document.getElementById('flash');
+  flash.classList.remove('pop');
+  void flash.offsetWidth;
+  flash.classList.add('pop');
+
+  const audio = document.getElementById('scare-audio');
+  audio.currentTime = 0;
+  audio.volume = 1.0;
+  audio.play().catch(() => {});
+  playScarySound();
+
+  document.getElementById('scare').classList.add('active');
+  document.getElementById('reset-btn').style.display = 'block';
+
+  if (validImgs.length > 0) {
+    imgCursor = 0;
+    cycleImg();
+    imgInterval = setInterval(cycleImg, IMG_SWITCH_MS);
+  } else {
+    document.getElementById('scare-fallback').classList.add('show');
+  }
+}
+
+function cycleImg() {
+  validImgs.forEach(img => img.classList.remove('visible'));
+  validImgs[imgCursor % validImgs.length].classList.add('visible');
+  imgCursor++;
+}
+
+let scareAudioCtx = null;
+
+function playScarySound() {
+  try {
+    if (scareAudioCtx) { scareAudioCtx.close(); }
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    scareAudioCtx = ctx;
+
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.value = -6;
+    compressor.knee.value = 0;
+    compressor.ratio.value = 20;
+    compressor.attack.value = 0.001;
+    compressor.release.value = 0.1;
+    compressor.connect(ctx.destination);
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.value = 3.0;
+    masterGain.connect(compressor);
+
+    const TOTAL = 5.0;
+
+    const bufSize = ctx.sampleRate * TOTAL;
+    const noiseBuf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const nd = noiseBuf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) nd[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = noiseBuf;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(1.5, ctx.currentTime);
+    noiseGain.gain.setValueAtTime(0.001, ctx.currentTime + TOTAL);
+    noise.connect(noiseGain);
+    noiseGain.connect(masterGain);
+    noise.start(ctx.currentTime);
+
+    const REPEAT_INTERVAL = 0.4;
+    const repeats = Math.floor(TOTAL / REPEAT_INTERVAL);
+    for (let r = 0; r < repeats; r++) {
+      const t = ctx.currentTime + r * REPEAT_INTERVAL;
+
+      const s = ctx.createOscillator();
+      const sg = ctx.createGain();
+      s.type = 'sawtooth';
+      s.frequency.setValueAtTime(150 + Math.random() * 300, t);
+      s.frequency.exponentialRampToValueAtTime(800 + Math.random() * 600, t + 0.1);
+      s.frequency.exponentialRampToValueAtTime(200 + Math.random() * 200, t + 0.35);
+      sg.gain.setValueAtTime(0, t);
+      sg.gain.linearRampToValueAtTime(1.2, t + 0.02);
+      sg.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+      s.connect(sg); sg.connect(masterGain);
+      s.start(t); s.stop(t + 0.4);
+
+      const b = ctx.createOscillator();
+      const bg = ctx.createGain();
+      b.type = 'sine';
+      b.frequency.setValueAtTime(80, t);
+      b.frequency.exponentialRampToValueAtTime(30, t + 0.3);
+      bg.gain.setValueAtTime(0, t);
+      bg.gain.linearRampToValueAtTime(1.5, t + 0.01);
+      bg.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      b.connect(bg); bg.connect(masterGain);
+      b.start(t); b.stop(t + 0.35);
+    }
+
+    const drone = ctx.createOscillator();
+    const dg = ctx.createGain();
+    drone.type = 'sawtooth';
+    drone.frequency.setValueAtTime(50, ctx.currentTime);
+    drone.frequency.linearRampToValueAtTime(35, ctx.currentTime + TOTAL);
+    dg.gain.setValueAtTime(1.0, ctx.currentTime);
+    dg.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + TOTAL);
+    drone.connect(dg); dg.connect(masterGain);
+    drone.start(ctx.currentTime);
+    drone.stop(ctx.currentTime + TOTAL);
+
+  } catch(e) { console.warn('Web Audio not supported', e); }
+}
+
+function stopScarySound() {
+  if (scareAudioCtx) {
+    scareAudioCtx.close();
+    scareAudioCtx = null;
+  }
+}
+
+function resetAll() {
+  current = 0;
+  score = 0;
+  answered = false;
+  clearTimeout(scareTimer);
+  clearInterval(imgInterval);
+  imgInterval = null;
+  imgCursor = 0;
+
+  const audio = document.getElementById('scare-audio');
+  audio.pause();
+  audio.currentTime = 0;
+  stopScarySound();
+
+  document.getElementById('scare').classList.remove('active');
+  document.getElementById('scare-fallback').classList.remove('show');
+  document.getElementById('reset-btn').style.display = 'none';
+  validImgs.forEach(img => img.classList.remove('visible'));
+
+  document.getElementById('score-label').textContent = 'スコア: 0点';
+  document.getElementById('cdown-wrap').style.display = 'none';
+
+  preloadImages();
+  setTimeout(renderQuestion, 100);
+}
+
+renderQuestion();
+</script>
+</body>
+</html>
