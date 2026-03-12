@@ -333,6 +333,24 @@ function onTimeout() {
 
   document.getElementById('timeout-msg').style.display = 'block';
 
+  const idx1 = current + 1;
+
+  if (idx1 === SCARE_ON_QUESTION) {
+
+    clearTimeout(scareTimer);
+
+    setTimeout(() => {
+      document.getElementById('timeout-msg').style.display = 'none';
+
+      document.getElementById('blackout').classList.add('fade-in');
+
+      setTimeout(triggerScare, 1300);
+
+    }, 800);
+
+    return;
+  }
+
   setTimeout(() => {
     document.getElementById('timeout-msg').style.display = 'none';
     current++;
