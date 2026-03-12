@@ -333,15 +333,22 @@ function onTimeout() {
  
   document.getElementById('timeout-msg').style.display = 'block';
 
-  if (current + 1 === SCARE_ON_QUESTION) {
-    clearTimeout(scareTimer);
-    setTimeout(() => {
-      document.getElementById('timeout-msg').style.display = 'none';
-      document.getElementById('blackout').classList.add('fade-in');
-      setTimeout(triggerScare, 1300);
-    }, 800);
-    return;
-  }
+ if (current + 1 === SCARE_ON_QUESTION) {
+   clearTimeout(scareTimer);
+   setTimeout(() => {
+     document.getElementById('timeout-msg').style.display = 'none';
+     const bo = document.getElementById('blackout');
+     bo.style.transition = 'opacity 0.5s ease';
+     bo.style.opacity = '0';
+     requestAnimationFrame(() => {
+       requestAnimationFrame(() => {
+         bo.style.opacity = '1';
+         setTimeout(triggerScare, 1300);
+       });
+     });
+   }, 800);
+   return;
+ }
  
   setTimeout(() => {
     document.getElementById('timeout-msg').style.display = 'none';
@@ -424,14 +431,19 @@ function handleAnswer(idx, btn) {
     document.querySelectorAll('.choice-btn')[q.ans].classList.add('correct');
   }
 
-  if (current + 1 === SCARE_ON_QUESTION) {
-    clearTimeout(scareTimer);
-    setTimeout(() => {
-      document.getElementById('blackout').classList.add('fade-in');
-      setTimeout(triggerScare, 1300);
-    }, 400);
-    return;
-  }
+ if (current + 1 === SCARE_ON_QUESTION) {
+   clearTimeout(scareTimer);
+   setTimeout(() => {
+     const bo = document.getElementById('blackout');
+     bo.style.transition = 'opacity 0.5s ease';
+     bo.style.opacity = '0';
+     requestAnimationFrame(() => {
+       requestAnimationFrame(() => {
+         bo.style.opacity = '1';
+         setTimeout(triggerScare, 1300);
+       });
+     });
+   }, 400);
 
   setTimeout(() => {
     current++;
@@ -566,23 +578,26 @@ function resetAll() {
   clearQuestionTimer();
   imgInterval = null;
   imgCursor = 0;
-
+ 
   const audio = document.getElementById('scare-audio');
   audio.pause();
   audio.currentTime = 0;
   stopScarySound();
-
-  document.getElementById('blackout').classList.remove('fade-in');
+ 
+  const bo = document.getElementById('blackout');
+  bo.style.transition = '';
+  bo.style.opacity = '0';
+  bo.classList.remove('fade-in');
   document.getElementById('scare').classList.remove('active');
   document.getElementById('scare-fallback').classList.remove('show');
   document.getElementById('reset-btn').style.display = 'none';
   validImgs.forEach(img => img.classList.remove('visible'));
-
+ 
   document.getElementById('score-label').textContent = 'スコア: 0点';
   document.getElementById('cdown-wrap').style.display = 'none';
   document.getElementById('timer-wrap').style.display = 'none';
   document.getElementById('timeout-msg').style.display = 'none';
-
+ 
   preloadImages();
   setTimeout(renderQuestion, 100);
 }
