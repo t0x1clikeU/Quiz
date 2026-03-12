@@ -39,11 +39,7 @@
   .question-num { font-size:0.8rem; font-weight:700; color:#2196f3; text-transform:uppercase; letter-spacing:2px; margin-bottom:14px; }
   .question-text { font-family:'Noto Sans JP',sans-serif; font-size:clamp(1.1rem,3vw,1.35rem); font-weight:700; line-height:1.7; margin-bottom:28px; white-space:pre-line; }
 
-  .choices {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-  }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 500px) {
     .choices { grid-template-columns: 1fr; gap: 10px; }
     .card { padding: 24px 18px; }
@@ -63,31 +59,12 @@
   .choice-btn.correct .choice-label { background:#4caf50; }
   .choice-btn.wrong   .choice-label { background:#ef5350; }
 
-  .timer-wrap { margin-bottom: 18px; display: none; }
-  .timer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .timer-label { font-size: 0.78rem; font-weight: 700; color: #888; letter-spacing: 1px; }
-  .timer-sec { font-size: 0.95rem; font-weight: 900; color: #2196f3; min-width: 40px; text-align: right; transition: color 0.3s; }
-  .timer-sec.warning { color: #f44336; animation: timerPulse 0.5s ease infinite alternate; }
-  @keyframes timerPulse { from { transform: scale(1); } to { transform: scale(1.15); } }
-  .timer-bar { height: 7px; background: #eee; border-radius: 99px; overflow: hidden; }
-  .timer-fill { height: 100%; background: linear-gradient(90deg, #4caf50, #ffeb3b, #f44336); border-radius: 99px; width: 100%; transition: width linear, background 0.5s; }
-
-  .timeout-msg {
-    display: none; text-align: center;
-    color: #f44336; font-weight: 700; font-size: 0.95rem;
-    margin-top: 14px; animation: fadeUp 0.3s ease;
-  }
-
-  .cdown-wrap { margin-top:24px; display:none; }
-  .cdown-bar { height:6px; background:#eee; border-radius:99px; overflow:hidden; }
-  .cdown-fill { height:100%; background:linear-gradient(90deg,#4caf50,#ffeb3b,#f44336); border-radius:99px; width:100%; }
-
   #blackout {
     position: fixed; inset: 0; z-index: 9000;
     background: #000; opacity: 0; pointer-events: none;
     transition: none;
   }
-  #blackout.fade-in { opacity: 1; pointer-events: all;transition: opacity 1s ease;}
+  #blackout.fade-in { opacity: 1; pointer-events: all; }
 
   #scare {
     display:none; position:fixed; inset:0; z-index:9999;
@@ -98,8 +75,7 @@
   .scare-img {
     position:absolute; inset:0;
     width:100%; height:100%; object-fit:cover;
-    opacity:0;
-    animation: imgShake 0.08s infinite;
+    opacity:0; animation: imgShake 0.08s infinite;
   }
   .scare-img.visible { opacity:1; }
 
@@ -126,8 +102,7 @@
     font-family:'Noto Sans JP',sans-serif;
     font-size:clamp(2rem,7vw,5rem); font-weight:900; color:#ff1111;
     text-shadow:0 0 20px #ff0000, 0 0 60px #ff4400, 0 0 100px #ff0000;
-    letter-spacing:6px;
-    animation:textFlicker 0.2s steps(1) infinite;
+    letter-spacing:6px; animation:textFlicker 0.2s steps(1) infinite;
   }
   @keyframes textFlicker {
     0%,45%  { opacity:1;   transform:scale(1); }
@@ -177,23 +152,9 @@
   <div id="quiz-screen">
     <div class="card" id="quiz-card">
       <div class="badge">一般常識問題</div>
-
-      <div class="timer-wrap" id="timer-wrap">
-        <div class="timer-header">
-          <span class="timer-label">制限時間</span>
-          <span class="timer-sec" id="timer-sec">10</span>
-        </div>
-        <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
-      </div>
-
       <div class="question-num" id="q-num">問題 1</div>
       <div class="question-text" id="q-text"></div>
       <div class="choices" id="choices"></div>
-      <div class="timeout-msg" id="timeout-msg">時間切れ！</div>
-
-      <div class="cdown-wrap" id="cdown-wrap">
-        <div class="cdown-bar"><div class="cdown-fill" id="cdown-fill"></div></div>
-      </div>
     </div>
   </div>
 </div>
@@ -214,15 +175,10 @@
 <audio id="scare-audio" src="sound.mp3" preload="auto"></audio>
 
 <script>
-const HORROR_IMAGES = [
-  'img/1.jpg',
-];
-
+const HORROR_IMAGES = ['img/1.jpg'];
 const IMG_SWITCH_MS = 100;
 const SCARE_ON_QUESTION = 3;
 const SCARE_DELAY_SEC = 10;
-
-const QUESTION_TIME_SEC = 10;
 
 const questions = [
   {
@@ -259,8 +215,6 @@ let scareTimer = null;
 let imgInterval = null;
 let imgCursor = 0;
 let validImgs = [];
-let questionTimerInterval = null;
-let questionTimeLeft = 0;
 const labels = ['A','B','C','D'];
 
 function preloadImages() {
@@ -279,91 +233,16 @@ function preloadImages() {
 }
 preloadImages();
 
-function clearQuestionTimer() {
-  clearInterval(questionTimerInterval);
-  questionTimerInterval = null;
-}
-
-function startQuestionTimer() {
-  const idx1 = current + 1;
-  if (idx1 < 2) return;
-
-  questionTimeLeft = (idx1 === SCARE_ON_QUESTION) ? SCARE_DELAY_SEC : QUESTION_TIME_SEC;
-
-  const wrap = document.getElementById('timer-wrap');
-  const secEl = document.getElementById('timer-sec');
-  const fill = document.getElementById('timer-fill');
-
-  wrap.style.display = 'block';
-  secEl.textContent = questionTimeLeft;
-  secEl.classList.remove('warning');
-
-  fill.style.transition = 'none';
-  fill.style.width = '100%';
-
-  const duration = questionTimeLeft;
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      fill.style.transition = `width ${duration}s linear`;
-      fill.style.width = '0%';
-    });
-  });
-
-  questionTimerInterval = setInterval(() => {
-    questionTimeLeft--;
-    secEl.textContent = questionTimeLeft;
-
-    if (questionTimeLeft <= 3) secEl.classList.add('warning');
-
-    if (questionTimeLeft <= 0) {
-      clearQuestionTimer();
-      onTimeout();
-    }
-  }, 1000);
-}
-
-function onTimeout() {
-  if (answered) return;
-  answered = true;
-　clearTimeout(scareTimer);
-  const q = questions[current];
-  const btns = document.querySelectorAll('.choice-btn');
-  btns.forEach(b => b.disabled = true);
-  btns[q.ans].classList.add('correct');
-
-  document.getElementById('timeout-msg').style.display = 'block';
-
-  if (current + 1 === SCARE_ON_QUESTION) {
-    clearTimeout(scareTimer);
-    setTimeout(() => {
-      document.getElementById('timeout-msg').style.display = 'none';
-      document.getElementById('blackout').classList.add('fade-in');
-      setTimeout(triggerScare, 1300);
-    }, 800);
-    return;
-  }
-
-  setTimeout(() => {
-    document.getElementById('timeout-msg').style.display = 'none';
-    current++;
-    renderQuestion();
-  }, 1200);
-}
-
 function renderQuestion() {
   const q = questions[current];
   answered = false;
   clearTimeout(scareTimer);
-  clearQuestionTimer();
 
   const idx1 = current + 1;
-  document.getElementById('q-num').textContent  = `問題 ${idx1}`;
+  document.getElementById('q-num').textContent = `問題 ${idx1}`;
   document.getElementById('q-text').textContent = q.q;
   document.getElementById('prog-label').textContent = `問題 ${idx1} / ${questions.length}`;
   document.getElementById('prog-fill').style.width = `${(current / questions.length) * 100}%`;
-  document.getElementById('cdown-wrap').style.display = 'none';
-  document.getElementById('timer-wrap').style.display = 'none';
-  document.getElementById('timer-sec').classList.remove('warning');
 
   const choicesEl = document.getElementById('choices');
   choicesEl.innerHTML = '';
@@ -381,18 +260,17 @@ function renderQuestion() {
   card.style.animation = 'fadeUp 0.4s ease';
 
   if (idx1 === SCARE_ON_QUESTION) {
-    scareTimer = setTimeout(triggerScare, SCARE_DELAY_SEC * 1000);
+    scareTimer = setTimeout(() => {
+      document.getElementById('blackout').classList.add('fade-in');
+      setTimeout(triggerScare, 1300);
+    }, SCARE_DELAY_SEC * 1000);
   }
-
-  startQuestionTimer();
 }
 
 function handleAnswer(idx, btn) {
   if (answered) return;
   answered = true;
-  clearQuestionTimer();
   clearTimeout(scareTimer);
-  document.getElementById('timeout-msg').style.display = 'none';
 
   const q = questions[current];
   document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
@@ -422,7 +300,6 @@ function handleAnswer(idx, btn) {
 
 function triggerScare() {
   clearTimeout(scareTimer);
-  clearQuestionTimer();
 
   const flash = document.getElementById('flash');
   flash.classList.remove('pop');
@@ -474,7 +351,6 @@ function playScarySound() {
     masterGain.connect(compressor);
 
     const TOTAL = 5.0;
-
     const bufSize = ctx.sampleRate * TOTAL;
     const noiseBuf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
     const nd = noiseBuf.getChannelData(0);
@@ -492,7 +368,6 @@ function playScarySound() {
     const repeats = Math.floor(TOTAL / REPEAT_INTERVAL);
     for (let r = 0; r < repeats; r++) {
       const t = ctx.currentTime + r * REPEAT_INTERVAL;
-
       const s = ctx.createOscillator();
       const sg = ctx.createGain();
       s.type = 'sawtooth';
@@ -544,7 +419,6 @@ function resetAll() {
   answered = false;
   clearTimeout(scareTimer);
   clearInterval(imgInterval);
-  clearQuestionTimer();
   imgInterval = null;
   imgCursor = 0;
 
@@ -558,11 +432,7 @@ function resetAll() {
   document.getElementById('scare-fallback').classList.remove('show');
   document.getElementById('reset-btn').style.display = 'none';
   validImgs.forEach(img => img.classList.remove('visible'));
-
   document.getElementById('score-label').textContent = 'スコア: 0点';
-  document.getElementById('cdown-wrap').style.display = 'none';
-  document.getElementById('timer-wrap').style.display = 'none';
-  document.getElementById('timeout-msg').style.display = 'none';
 
   preloadImages();
   setTimeout(renderQuestion, 100);
